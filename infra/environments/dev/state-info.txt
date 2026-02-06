@@ -1,0 +1,5 @@
+AWS_ACCOUNT_ID=094156049339
+AWS_REGION=us-east-1
+TF_STATE_BUCKET=harry-governed-ai-tfstate-1770412450
+TF_LOCK_TABLE=harry-governed-ai-tflock
+DEPLOY_ROLE_ARN=arn:aws:iam::094156049339:role/github-terraform-deployer
