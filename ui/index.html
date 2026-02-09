@@ -5,117 +5,86 @@
   <title>Governed AI Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 32px; }
-    h1 { margin: 0 0 16px; color: #1a202c; }
-    .sub { color: #4a5568; margin-bottom: 24px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
-    .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); border-left: 6px solid #cbd5e0; }
-    .ok { border-left-color: #38a169; }
-    .warn { border-left-color: #dd6b20; }
-    .bad { border-left-color: #e53e3e; }
-    .title { font-size: 16px; font-weight: 700; margin-bottom: 8px; color: #2d3748; }
-    .row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px dashed #edf2f7; }
-    .row:last-child { border-bottom: 0; }
-    .k { color: #4a5568; font-weight: 600; }
-    .v { color: #111827; font-weight: 700; }
-    .tiny { margin-top: 10px; color: #718096; font-size: 12px; }
-    .pill { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; }
-    .pill-ok { background: #c6f6d5; color: #22543d; }
-    .pill-warn { background: #feebc8; color: #7b341e; }
-    .pill-bad { background: #fed7d7; color: #742a2a; }
-    code { background: #edf2f7; padding: 2px 6px; border-radius: 6px; }
+    body { font-family: system-ui, Arial, sans-serif; background:#f4f6f8; padding:30px; }
+    h1 { margin-bottom:6px; }
+    .sub { color:#555; margin-bottom:24px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:16px; }
+    .card { background:#fff; padding:18px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.08); }
+    .ok { color:#2f855a; font-weight:700; }
+    .warn { color:#b7791f; font-weight:700; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    th,td { padding:6px; border-bottom:1px solid #eee; text-align:left; }
+    code { background:#edf2f7; padding:2px 6px; border-radius:6px; }
   </style>
 </head>
 <body>
-  <h1>Governed AI Dashboard</h1>
-  <div class="sub">
-    Live governance + audit + cost visibility for <code>dev</code>.
-  </div>
 
-  <div class="grid">
-    <div id="governance" class="card">Loading governance…</div>
-    <div id="audit" class="card">Loading audit/usage…</div>
-    <div id="cost" class="card">Loading cost/budget…</div>
-  </div>
+<h1>Governed AI Dashboard</h1>
+<div class="sub">Live governance + audit + cost visibility for <code>dev</code></div>
+
+<div class="grid">
+  <div id="status" class="card">Loading status…</div>
+  <div id="governance" class="card">Loading governance…</div>
+</div>
+
+<br/>
+
+<div id="audit" class="card">
+  <b>Audit Timeline</b>
+  <div>Loading audit events…</div>
+</div>
 
 <script>
-  const API_URL = "https://lb5k5s01q4.execute-api.us-east-1.amazonaws.com/status";
+const BASE = "https://lb5k5s01q4.execute-api.us-east-1.amazonaws.com";
 
-  function pill(cls, text) {
-    return `<span class="pill ${cls}">${text}</span>`;
+async function load() {
+  const status = await fetch(BASE + "/status").then(r => r.json());
+  const gov    = await fetch(BASE + "/governance").then(r => r.json());
+  const audit  = await fetch(BASE + "/audit").then(r => r.json());
+
+  document.getElementById("status").innerHTML = `
+    <b>Status</b>
+    <table>
+      <tr><td>Project</td><td>${status.project}</td></tr>
+      <tr><td>Environment</td><td>${status.environment}</td></tr>
+      <tr><td>AI Enabled</td><td class="ok">${status.ai_enabled}</td></tr>
+      <tr><td>Kill Switch</td><td>${status.kill_switch_active}</td></tr>
+      <tr><td>Guardrails</td><td class="ok">${status.guardrails_active}</td></tr>
+    </table>
+  `;
+
+  document.getElementById("governance").innerHTML = `
+    <b>Governance Controls</b>
+    <table>
+      <tr><td>IAM Guardrails</td><td class="ok">${gov.governance.policy_enforcement.iam_guardrails}</td></tr>
+      <tr><td>Network Restricted</td><td class="ok">${gov.governance.policy_enforcement.network_restricted}</td></tr>
+      <tr><td>Data Exfil Blocked</td><td class="ok">${gov.governance.policy_enforcement.data_exfil_blocked}</td></tr>
+      <tr><td>Model Access</td><td>${gov.governance.risk_posture.model_access}</td></tr>
+      <tr><td>Internet Egress</td><td>${gov.governance.risk_posture.internet_egress}</td></tr>
+      <tr><td>Human Override</td><td>${gov.governance.risk_posture.human_override_required}</td></tr>
+    </table>
+  `;
+
+  if (!audit.audit || audit.audit.length === 0) {
+    document.getElementById("audit").innerHTML += "<div>No audit events yet.</div>";
+    return;
   }
 
-  function money(n) {
-    if (n === null || n === undefined) return "n/a";
-    return `$${Number(n).toFixed(2)}`;
-  }
+  let rows = audit.audit.map(e =>
+    `<tr><td>${e.event_time}</td><td>${e.actor}</td><td>${e.action}</td><td>${e.source_ip}</td></tr>`
+  ).join("");
 
-  fetch(API_URL)
-    .then(r => r.json())
-    .then(data => {
-      // --- Governance card ---
-      const gov = document.getElementById("governance");
-      const govClass = data.ai_enabled ? "ok" : "bad";
-      const govPill = data.ai_enabled ? pill("pill-ok", "AI ENABLED") : pill("pill-bad", "AI DISABLED");
+  document.getElementById("audit").innerHTML = `
+    <b>Audit Timeline</b>
+    <table>
+      <tr><th>Time</th><th>Actor</th><th>Action</th><th>IP</th></tr>
+      ${rows}
+    </table>
+  `;
+}
 
-      gov.className = `card ${govClass}`;
-      gov.innerHTML = `
-        <div class="title">AI Governance Status ${govPill}</div>
-        <div class="row"><div class="k">Environment</div><div class="v">${data.environment}</div></div>
-        <div class="row"><div class="k">AI Enabled</div><div class="v">${data.ai_enabled}</div></div>
-        <div class="row"><div class="k">Kill Switch Active</div><div class="v">${data.kill_switch_active}</div></div>
-        <div class="row"><div class="k">Guardrails Active</div><div class="v">${data.guardrails_active}</div></div>
-        <div class="tiny">Source: IAM/SSM truth via Lambda → API Gateway</div>
-      `;
-
-      // --- Audit/usage card ---
-      const audit = document.getElementById("audit");
-      audit.className = "card ok";
-      const inv1h = data.metrics?.invocations_1h ?? data.dashboard_invocations_1h ?? 0;
-      const err24h = data.metrics?.errors_24h ?? data.dashboard_errors_24h ?? 0;
-
-      audit.innerHTML = `
-        <div class="title">Audit & Usage Metrics ${pill("pill-ok", "LIVE")}</div>
-        <div class="row"><div class="k">Invocations (Last 1h)</div><div class="v">${inv1h}</div></div>
-        <div class="row"><div class="k">Errors (Last 24h)</div><div class="v">${err24h}</div></div>
-        <div class="row"><div class="k">Last Updated (UTC)</div><div class="v">${data.last_updated_utc}</div></div>
-        <div class="tiny">Source: CloudWatch metrics + runtime timestamp</div>
-      `;
-
-      // --- Cost card ---
-      const cost = document.getElementById("cost");
-      const c = data.cost || {};
-      const burn = Number(c.burn_percentage ?? 0);
-      const over = Boolean(c.over_budget);
-
-      let costClass = "ok";
-      let costPill = pill("pill-ok", "HEALTHY");
-      if (burn >= 80 && burn < 100) {
-        costClass = "warn";
-        costPill = pill("pill-warn", "WATCH");
-      }
-      if (over || burn >= 100) {
-        costClass = "bad";
-        costPill = pill("pill-bad", "OVER BUDGET");
-      }
-
-      cost.className = `card ${costClass}`;
-      cost.innerHTML = `
-        <div class="title">Cost Governance ${costPill}</div>
-        <div class="row"><div class="k">Monthly Budget</div><div class="v">${money(c.monthly_budget_usd)}</div></div>
-        <div class="row"><div class="k">Current Spend (MTD)</div><div class="v">${money(c.current_spend_usd)}</div></div>
-        <div class="row"><div class="k">Remaining Budget</div><div class="v">${money(c.remaining_budget_usd)}</div></div>
-        <div class="row"><div class="k">Burn %</div><div class="v">${burn.toFixed(2)}%</div></div>
-        <div class="row"><div class="k">Over Budget</div><div class="v">${over}</div></div>
-        <div class="tiny">Source: AWS Cost Explorer (read-only)</div>
-      `;
-    })
-    .catch(err => {
-      document.getElementById("governance").className = "card bad";
-      document.getElementById("governance").innerHTML =
-        "<div class='title'>Failed to load governance data</div><div class='tiny'>Check API/CORS and Lambda logs.</div>";
-      console.error(err);
-    });
+load();
 </script>
+
 </body>
 </html>

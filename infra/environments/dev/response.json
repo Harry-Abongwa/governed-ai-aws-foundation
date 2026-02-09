@@ -1,0 +1,1 @@
+{"statusCode": 200, "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"}, "body": "{\"service\": \"governed-ai-dashboard\", \"routes\": [\"/status\", \"/audit\"], \"time\": \"2026-02-07T04:05:51.489363+00:00\"}"}
