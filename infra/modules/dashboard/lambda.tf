@@ -9,9 +9,12 @@ resource "aws_lambda_function" "dashboard" {
   source_code_hash = filebase64sha256("${path.module}/dashboard.zip")
 
   environment {
-    variables = {
+  variables = {
+    AUDIT_TABLE = aws_dynamodb_table.audit_events.name
       PROJECT = var.project_name
       ENV     = var.env
-    }
+    
+    AUDIT_TABLE = aws_dynamodb_table.audit_events.name
+  }
   }
 }

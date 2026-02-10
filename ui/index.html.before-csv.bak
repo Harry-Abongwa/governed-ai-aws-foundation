@@ -21,26 +21,6 @@ td{padding:12px 10px;border-top:1px solid var(--border);}
 button{background:var(--primary);color:white;border:none;padding:10px 16px;border-radius:10px;font-weight:600;cursor:pointer;}
 button:hover{opacity:.9;}
 .actions{display:flex;justify-content:flex-end;margin-bottom:10px;}
-.identity-panel {
-  position: absolute;
-  top: 32px;
-  right: 40px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 13px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-}
-.identity-panel strong {
-  display: block;
-  font-weight: 600;
-}
-.identity-panel span {
-  color: #64748b;
-  font-size: 12px;
-}
-
 </style>
 
   <meta charset="UTF-8" />
@@ -57,81 +37,12 @@ button:hover{opacity:.9;}
     table { width:100%; border-collapse:collapse; font-size:13px; }
     th,td { padding:6px; border-bottom:1px solid #eee; text-align:left; }
     code { background:#edf2f7; padding:2px 6px; border-radius:6px; }
-.identity-panel {
-  position: absolute;
-  top: 32px;
-  right: 40px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 10px 14px;
-  font-size: 13px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.06);
-}
-.identity-panel strong {
-  display: block;
-  font-weight: 600;
-}
-.identity-panel span {
-  color: #64748b;
-  font-size: 12px;
-}
-
   </style>
-<style>
-.ai-posture-banner {
-  display:flex;
-  align-items:flex-start;
-  gap:12px;
-  background:#f1f5f9;
-  border:1px solid #e5e7eb;
-  border-left:5px solid #2563eb;
-  border-radius:12px;
-  padding:14px 16px;
-  margin:20px 0 28px 0;
-  font-size:0.95rem;
-}
-.ai-posture-banner strong {
-  color:#1e3a8a;
-  display:block;
-  margin-bottom:2px;
-}
-.ai-posture-banner span {
-  color:#475569;
-}
-.ai-posture-icon {
-  font-size:20px;
-  line-height:1;
-}
-</style>
-
 </head>
 <body>
-<div class="identity-panel">
-  <strong>👤 demo-user</strong>
-  <span>Role: Read-Only</span>
-</div>
-
 
 <h1>Governed AI Dashboard</h1>
 <div class="sub">Live governance + audit + cost visibility for <code>dev</code></div>
-<div class="ai-posture-banner">
-  <div class="ai-posture-icon">🛡️</div>
-  <div>
-    <strong>AI Usage Posture (Read-Only)</strong>
-    <span>
-      AI usage metrics are governed and monitored via centralized telemetry systems. 
-      This dashboard intentionally exposes governance and audit visibility only.
-    </span>
-  </div>
-</div>
-
-<div style="margin-top:8px;">
-  <span style="font-size:12px;padding:4px 10px;border-radius:999px;background:#eef2ff;color:#3730a3;font-weight:600;">
-    Read-Only · Demo Environment
-  </span>
-</div>
-
 
 <div class="grid">
   <div id="status" class="card">Loading status…</div>
@@ -203,10 +114,6 @@ load();
 <hr />
 
 <h2>Audit Events</h2>
-<div class="actions">
-  <button onclick="exportCSV()">⬇ Export CSV</button>
-</div>
-
 <table border="1">
   <thead>
     <tr>
@@ -258,40 +165,6 @@ function exportCSV() {
       a.href = url;
       a.download = "audit-events.csv";
       a.click();
-      URL.revokeObjectURL(url);
-    });
-}
-</script>
-<script>
-function exportCSV() {
-  fetch("https://lb5k5s01q4.execute-api.us-east-1.amazonaws.com/audit")
-    .then(r => r.json())
-    .then(data => {
-      if (!data.audit || data.audit.length === 0) {
-        alert("No audit data");
-        return;
-      }
-
-      const headers = ["Time","Actor","Action","Source IP"];
-      const rows = data.audit.map(e => [
-        e.event_time,
-        e.actor,
-        e.action,
-        e.source_ip
-      ]);
-
-      const csv = [headers, ...rows]
-        .map(r => r.map(v => `"${v}"`).join(","))
-        .join("\n");
-
-      const blob = new Blob([csv], { type: "text/csv" });
-      const url = URL.createObjectURL(blob);
-
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "audit-events.csv";
-      a.click();
-
       URL.revokeObjectURL(url);
     });
 }

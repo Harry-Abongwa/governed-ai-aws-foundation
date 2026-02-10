@@ -1,0 +1,313 @@
+<style>
+:root {
+  --bg: #f7f9fc;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --success: #16a34a;
+  --danger: #dc2626;
+  --accent: #2563eb;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  margin: 0;
+  padding: 32px;
+}
+h1, h2 { margin-bottom: 12px; }
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+
+  width: 100%;
+  border-collapse: collapse;
+}
+th {
+  text-align: left;
+  font-size: 13px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 8px;
+}
+td {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.badge-true { color: var(--success); font-weight: 600; }
+.badge-false { color: var(--danger); font-weight: 600; }
+.footer {
+  margin-top: 40px;
+  font-size: 12px;
+  color: var(--muted);
+}
+[data-theme="dark"] {
+  --bg: #020617;
+  --card: #020617;
+  --border: #1e293b;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #60a5fa;
+}
+.toggle {
+  cursor: pointer;
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--card);
+}
+.badge {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--border);
+  color: var(--muted);
+}
+
+:root {
+  --bg: #f8fafc;
+  --card: #ffffff;
+  --border: #e5e7eb;
+  --text: #0f172a;
+  --muted: #64748b;
+  --success: #22c55e;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --accent: #3b82f6;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(15,23,42,0.06);
+}
+
+h1 {
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--muted);
+  margin-top: -8px;
+}
+
+.pill {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.pill.green { background:#dcfce7; color:#166534; }
+.pill.yellow { background:#fef9c3; color:#854d0e; }
+.pill.red { background:#fee2e2; color:#7f1d1d; }
+
+</style>
+
+<script>
+async function loadAudit() {
+  const res = await fetch("https://lb5k5s01q4.execute-api.us-east-1.amazonaws.com/audit");
+  const data = await res.json();
+
+  const table = document.getElementById("audit-table");
+  table.innerHTML = "";
+
+  window.auditData = data.audit;
+  window.auditData = data.audit;
+  window.auditData = data.audit;
+  data.audit.forEach(e => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${e.event_time}</td>
+      <td>${e.action}</td>
+      <td>${e.actor}</td>
+      <td>${e.source_ip}</td>
+    `;
+    table.appendChild(row);
+  });
+}
+
+window.onload = loadAudit;
+</script>
+
+<h2>Audit Events</h2>
+<div style="margin:10px 0;">
+<button id="csvBtn" style="background:#2563eb;color:white;padding:8px 14px;border:none;border-radius:6px;font-weight:600;cursor:pointer;">⬇ Download CSV</button>
+</div>
+<button id="csvBtn" style="margin:10px 0;padding:8px 14px;border-radius:6px;border:1px solid #ccc;cursor:pointer;background:#f3f4f6;">⬇ Download CSV</button>
+<button onclick="exportCSV()" style="margin-bottom:12px; padding:8px 14px; border-radius:8px; border:1px solid #e5e7eb; background:#3b82f6; color:white; font-weight:600; cursor:pointer;">
+⬇️ Export CSV
+</button>
+
+<table border="1">
+  <thead>
+    <tr>
+      <th>Time</th>
+      <th>Action</th>
+      <th>Actor</th>
+      <th>Source IP</th>
+    </tr>
+  </thead>
+  <tbody id="audit-table"></tbody>
+</table>
+
+
+<div class="grid">
+  <div class="card" id="status-card"></div>
+  <div class="card" id="governance-card"></div>
+</div>
+
+<div class="card">
+  <h2>Audit Timeline</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Action</th>
+        <th>Actor</th>
+        <th>IP</th>
+      </tr>
+    </thead>
+    <tbody id="audit-table"></tbody>
+  </table>
+</div>
+
+<div class="footer">
+  Governed AI Foundation · Dev Environment
+</div>
+
+
+<script>
+let dark = false;
+
+function toggleTheme() {
+  dark = !dark;
+  document.documentElement.setAttribute(
+    "data-theme",
+    dark ? "dark" : "light"
+  );
+}
+
+function updateRefreshTime() {
+  document.getElementById("refresh-badge").innerText =
+    "Last refresh: " + new Date().toLocaleTimeString();
+}
+
+// auto refresh audit every 15s (safe)
+setInterval(() => {
+  if (typeof loadAudit === "function") {
+    loadAudit();
+    updateRefreshTime();
+  }
+}, 15000);
+
+updateRefreshTime();
+</script>
+
+
+<script>
+function fmt(ts) {
+  return new Date(ts).toLocaleString();
+}
+</script>
+
+<script>
+function exportCSV() {
+  if (!window.auditData || window.auditData.length === 0) {
+    alert("No audit data to export");
+    return;
+  }
+
+  const headers = ["event_time","actor","action","source_ip"];
+  const rows = window.auditData.map(e =>
+    headers.map(h => `"${(e[h] ?? "").toString().replace(/"/g,'""')}"`).join(",")
+  );
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "audit-events.csv";
+  a.click();
+
+  URL.revokeObjectURL(url);
+}
+</script>
+
+<script>
+function downloadCSV() {
+  if (!window.auditData || window.auditData.length === 0) {
+    alert("No audit data available");
+    return;
+  }
+
+  const headers = ["event_time","action","actor","source_ip"];
+  const rows = window.auditData.map(e =>
+    headers.map(h => `"${e[h] || ""}"`).join(",")
+  );
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "audit-events.csv";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+document.getElementById("csvBtn")?.addEventListener("click", downloadCSV);
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("csvBtn");
+  if (!btn) return;
+
+  btn.onclick = () => {
+    if (!window.auditData || window.auditData.length === 0) {
+      alert("No audit data available");
+      return;
+    }
+
+    const headers = ["event_time","action","actor","source_ip"];
+    const rows = window.auditData.map(e =>
+      headers.map(h => `"${e[h] || ""}"`).join(",")
+    );
+
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "audit-events.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+});
+</script>

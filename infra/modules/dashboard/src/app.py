@@ -1,9 +1,13 @@
 import json
 import os
+import uuid
+import boto3
 from datetime import datetime, timezone
 
 PROJECT = os.getenv("PROJECT", "governed-ai-foundation")
 ENV = os.getenv("ENV", "dev")
+AUDIT_TABLE = os.getenv("AUDIT_TABLE")
+ddb = boto3.resource("dynamodb")
 
 def log(event_type, payload):
     print(json.dumps({
@@ -45,6 +49,18 @@ def governance_block():
         }
     }
 
+def write_audit_event(event):
+    if not AUDIT_TABLE:
+        raise Exception("AUDIT_TABLE env var not set")
+
+    table = ddb.Table(AUDIT_TABLE)
+    table.put_item(Item={
+        "event_id": str(uuid.uuid4()),
+        **event
+    })
+
+
+
 def audit_log(action, source_ip, details=None):
     event = {
         "event_time": datetime.now(timezone.utc).isoformat(),
@@ -54,6 +70,7 @@ def audit_log(action, source_ip, details=None):
         "details": details or {}
     }
     emit_metric("AuditRead"); log("AUDIT_EVENT", event)
+    write_audit_event(event)
     return event
 
 def handler(event, context):
@@ -84,15 +101,10 @@ def handler(event, context):
 
 
     # AUDIT PANEL
+
+    # AUDIT PANEL
     if route == "GET /audit":
-        emit_metric("AuditRead")
-        event = {
-            "event_time": datetime.now(timezone.utc).isoformat(),
-            "actor": "api-user",
-            "action": "AUDIT_READ",
-            "source_ip": source_ip
-        }
-        log("AUDIT_EVENT", event)
+        event = audit_log("AUDIT_READ", source_ip)
         return response({
             "audit": [event],
             "count": 1
@@ -122,3 +134,4 @@ def emit_metric(name, value=1, unit="Count"):
         "Environment": ENV,
         name: value
     }))
+
